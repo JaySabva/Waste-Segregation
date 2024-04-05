@@ -13,6 +13,7 @@
   "private": true,
   "dependencies": {
     "express": "^4.19.2",
+    "ioredis-rejson": "^1.0.10",
     "morgan": "^1.10.0",
     "multer": "^1.4.5-lts.1"
   }
