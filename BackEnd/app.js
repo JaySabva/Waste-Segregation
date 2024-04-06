@@ -31,6 +31,15 @@ redisClient.on('connect', () => {
 //     }
 // }
 // redisSetup();
+app.use((req, res, next) => {
+    res.header('Access-Control-Allow-Origin', '*'); // * means all
+    res.header('Access-Control-Allow-Headers', 'Origin, X-Requested-With, Content-Type, Accept, Authorization'); // * means all
+    if (req.method === 'OPTIONS') {
+        res.header('Access-Control-Allow-Methods', 'PUT, POST, PATCH, DELETE, GET'); // * means all
+        return res.status(200).json({});
+    }
+    next();
+});
 
 app.post('/predict', upload.single('image'), (req, res) => {
     if (!req.file) {
@@ -116,7 +125,7 @@ app.get('/get-recyclers', async (req, res) => {
     }
 });
 
-const PORT = process.env.PORT || 3000;
+const PORT = process.env.PORT || 5000;
 app.listen(PORT, () => {
     console.log(`Server running on port ${PORT}`);
 });
