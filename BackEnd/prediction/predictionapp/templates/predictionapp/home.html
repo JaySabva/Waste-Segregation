@@ -1,0 +1,26 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Image</title>
+</head>
+<body>
+    <h1>hello</h1>
+
+    <form method="POST" action="" enctype="multipart/form-data">
+        {% csrf_token %}
+
+        <input type="file" class="im" name="img" accept="image/*" required>
+        <button class="btn btn-info" onclick="return confirm('Confirm Submition')">Submit</button>
+    </form>
+
+    {% if len != 0 %}
+    <br>
+        <h5>
+            Predicted output is: {{result}}
+        </h5>
+    {% endif %}
+</body>
+</html>
