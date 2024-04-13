@@ -1,3 +1,5 @@
+// import { Padding } from "@mui/icons-material";
+import { Height, Margin } from "@mui/icons-material";
 import React, { useRef, useState, useCallback } from "react";
 import Webcam from "react-webcam";
 
@@ -10,6 +12,25 @@ const WebcamCapture = () => {
         setImgSrc(imageSrc);
     }, [webcamRef, setImgSrc]);
 
+    const divstyle = {
+        width : 'auto',
+        Height : 200,
+        display: 'flex',
+        justifyContent: 'center',
+        alignItems: 'center',
+    };
+
+    const Buttonstyle = {
+        width: 250,
+        height: 50,
+        borderRadius: "15px",
+        padding: "12px 22px",
+        backgroundColor: "#b3c7bb",
+        color: "#000000a6",
+        fontSize: "20px",
+        fontWeight: 900,
+    };
+
     const dataURItoBlob = (dataURI) => {
         const byteString = atob(dataURI.split(",")[1]);
         const mimeString = dataURI.split(",")[0].split(":")[1].split(";")[0];
@@ -20,6 +41,10 @@ const WebcamCapture = () => {
         }
         const blob = new Blob([ab], { type: mimeString });
         return blob;
+    };
+
+    const recapture = () => {
+        setImgSrc(null);
     };
 
     const sendFile = async () => {
@@ -49,21 +74,37 @@ const WebcamCapture = () => {
     };
 
     return (
-        <>
-            <Webcam
-                audio={false}
-                ref={webcamRef}
-                screenshotFormat="image/jpeg"
-            />
-            <button onClick={capture}>Capture photo</button>
-            {imgSrc && (
-                <img
-                    src={imgSrc}
-                    alt="Captured"
-                />
+        <div style={divstyle}>
+            {!imgSrc && (
+              <div>
+                    <Webcam
+                        audio={false}
+                        ref={webcamRef}
+                        screenshotFormat="image/jpeg"
+                    />
+                     <div style={{textAlign: "center"}}>
+                        <button style={Buttonstyle} variant="outlined" onClick={capture}>Capture photo</button>
+                    </div>
+              </div>
+
+
             )}
-            <button onClick={sendFile}>Send Photo</button>
-        </>
+            <div style={{ textAlign: "center"}}>
+                {imgSrc && (
+                    <div>
+                      <img
+                      src={imgSrc}
+                      alt="Captured"
+                    />
+                    <div>
+                        <button style={Buttonstyle} variant="outlined" onClick={sendFile}>Send Photo</button>
+                        <button style={Buttonstyle} variant="outlined" onClick={recapture}>Recapture Photo</button>
+                    </div>
+                    </div>
+                )}
+            </div>
+
+        </div>
     );
 };
 
