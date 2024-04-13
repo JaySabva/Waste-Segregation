@@ -12,7 +12,7 @@ import { Paper, CardActionArea, CardMedia, Grid, TableContainer, Table, TableBod
 import cblogo from "./cblogo.PNG";
 import image from "./bg1.jpg";
 import DragDropFile from "./drag_and_drop";
-import WebcamCapture  from "./Webcapture";
+import WebcamCapture from "./Webcapture";
 //import { DropzoneArea } from 'material-ui-dropzone';
 import { common } from '@mui/material/colors';
 import Clear from '@mui/icons-material/Clear';
@@ -313,25 +313,26 @@ export const ImageUpload = () => {
     const [iswebcamera, setIswebcamera] = useState(false);
     const [latitude, setLatitude] = useState(null);
     const [longitude, setLongitude] = useState(null);
+    const [recycler, setRecycler] = useState(null);
     let confidence = 0;
 
-      const sendFile = async () => {
-        getLocation();
+    const sendFile = async () => {
+        // getLocation();
         if (image) {
 
-          let formData = new FormData();
-          formData.append("file", selectedFile);
-          let res = await axios({
-            method: "post",
-            url: process.env.REACT_APP_API_URL,
-            data: formData,
-          });
-          if (res.status === 200) {
-            setData(res.data);
-          }
-          setIsloading(false);
+            let formData = new FormData();
+            formData.append("file", selectedFile);
+            let res = await axios({
+                method: "post",
+                url: process.env.REACT_APP_API_URL,
+                data: formData,
+            });
+            if (res.status === 200) {
+                setData(res.data);
+            }
+            setIsloading(false);
         }
-      }
+    }
 
     const clearData = () => {
         setData(null);
@@ -372,19 +373,35 @@ export const ImageUpload = () => {
 
     const getLocation = () => {
         navigator.geolocation.getCurrentPosition(
-          (position) => {
-            setLatitude(position.coords.latitude);
-            setLongitude(position.coords.longitude);
-          },
-          (error) => {
-            console.error('Error getting location:', error);
-          }
+            (position) => {
+                setLatitude(position.coords.latitude);
+                setLongitude(position.coords.longitude);
+            },
+            (error) => {
+                console.error('Error getting location:', error);
+            }
         );
-      };
+    };
 
-    
+    const getRecycler = async () => {
+        getLocation();
+        try {
+            const response = await fetch(`http://localhost:3000/get-recyclers?category=${data}&latitude=${latitude}&longitude=${longitude}`, {
+                method: "GET",
+            });
 
-    const uploadtocam = () =>{
+            const responseData = await response.json();
+            if (response.status === 200) {
+                setRecycler(responseData.recycler);
+            }
+        } catch (error) {
+            console.error("There was a problem with the fetch operation:", error);
+        }
+    };
+
+
+
+    const uploadtocam = () => {
         setIswebcamera(!iswebcamera);
     }
 
@@ -413,7 +430,7 @@ export const ImageUpload = () => {
                     spacing={2}
                 >
                     <Grid item xs={12}>
-                       {!iswebcamera && <Card style={imageCardstyle}>
+                        {!iswebcamera && <Card style={imageCardstyle}>
                             {image && <CardActionArea>
                                 <CardMedia
                                     style={mediastyle}
@@ -426,28 +443,13 @@ export const ImageUpload = () => {
                             {!image && !iswebcamera && <CardContent >
                                 <DragDropFile filechange={onSelectFile} />
                             </CardContent>}
-                            {!iswebcamera && !image && <Button style={clearButtonstyle} variant="outlined" startIcon={<CameraAlt/>} onClick={uploadtocam}>
+                            {!iswebcamera && !image && <Button style={clearButtonstyle} variant="outlined" startIcon={<CameraAlt />} onClick={uploadtocam}>
                                 Open Camera
                             </Button>}
-                            {data && <CardContent style={detailstyle}>
-                                {/* <TableContainer component={Paper} style={tableContainerstyle}>
-                                    <Table style={tablestyle} size="small" aria-label="simple table">
-                                        <TableHead style={tableHeadstyle}>
-                                            <TableRow style={tableRowstyle}>
-                                                <TableCell style={tableCell1style}>Label:</TableCell>
-                                                <TableCell align="right" style={tableCell1style}>Confidence:</TableCell>
-                                            </TableRow>
-                                        </TableHead>
-                                        <TableBody style={tableBodystyle}>
-                                            <TableRow style={tableRowstyle}>
-                                                <TableCell component="th" scope="row" style={tableCellstyle}>
-                                                    {data.class}
-                                                </TableCell>
-                                                <TableCell align="right" style={tableCellstyle}>{confidence}%</TableCell>
-                                            </TableRow>
-                                        </TableBody>
-                                    </Table>
-                                </TableContainer> */}
+                            {data && !recycler && <CardContent style={detailstyle}>
+                                <Typography variant="h6" noWrap>{data}</Typography>
+                            </CardContent>}
+                            {recycler && <CardContent style={detailstyle}>
                                 <Typography variant="h6" noWrap>{data}</Typography>
                             </CardContent>}
                             {isLoading && <CardContent style={detailstyle}>
@@ -457,23 +459,31 @@ export const ImageUpload = () => {
                                 </Typography>
                             </CardContent>}
                         </Card>}
-                       
-                            {!image && iswebcamera && <WebcamCapture/>}
-                            {iswebcamera && (
-                            <div style={{textAlign: "center"}}>
-                            <Button style={clearButtonstyle} variant="outlined" startIcon={<CameraAlt/>} onClick={uploadtocam}>
-                                Upload Image
-                            </Button>
+
+                        {!image && iswebcamera && <WebcamCapture />}
+                        {iswebcamera && (
+                            <div style={{ textAlign: "center" }}>
+                                <Button style={clearButtonstyle} variant="outlined" startIcon={<CameraAlt />} onClick={uploadtocam}>
+                                    Upload Image
+                                </Button>
                             </div>
                         )}
                     </Grid>
-                    {data &&
+                    {data && !recycler &&
                         <Grid item style={buttonGridstyle} >
-                            <Button style={clearButtonstyle} variant="outlined" startIcon={<CloseIcon/>} onClick={clearData}>
+                            <Button style={clearButtonstyle} variant="outlined" startIcon={<CloseIcon />} onClick={clearData}>
                                 Close
                             </Button>
+                            <Button style={clearButtonstyle} variant="outlined" onClick={getRecycler}>
+                                getRecycler
+                            </Button>
                         </Grid>}
-                        
+                    {recycler && <Grid item style={buttonGridstyle} >
+                        <Button style={clearButtonstyle} variant="outlined" startIcon={<CloseIcon />} onClick={clearData}>
+                            Close
+                        </Button>
+                    </Grid>}
+
                 </Grid >
             </Container >
         </React.Fragment >

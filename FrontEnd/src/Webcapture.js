@@ -2,10 +2,27 @@
 import { Height, Margin } from "@mui/icons-material";
 import React, { useRef, useState, useCallback } from "react";
 import Webcam from "react-webcam";
+import Typography from "@mui/material/Typography";
 
 const WebcamCapture = () => {
     const webcamRef = useRef(null);
     const [imgSrc, setImgSrc] = useState(null);
+    const [data, setIsdata] = useState(null);
+    const [recycler, setRecycler] = useState(null);
+    const [latitude, setLatitude] = useState(null);
+    const [longitude, setLongitude] = useState(null);
+
+    const getLocation = () => {
+        navigator.geolocation.getCurrentPosition(
+          (position) => {
+            setLatitude(position.coords.latitude);
+            setLongitude(position.coords.longitude);
+          },
+          (error) => {
+            console.error('Error getting location:', error);
+          }
+        );
+      };
 
     const capture = useCallback(() => {
         const imageSrc = webcamRef.current.getScreenshot();
@@ -13,8 +30,8 @@ const WebcamCapture = () => {
     }, [webcamRef, setImgSrc]);
 
     const divstyle = {
-        width : 'auto',
-        Height : 200,
+        width: 'auto',
+        Height: 200,
         display: 'flex',
         justifyContent: 'center',
         alignItems: 'center',
@@ -47,6 +64,8 @@ const WebcamCapture = () => {
         setImgSrc(null);
     };
 
+ 
+
     const sendFile = async () => {
         if (imgSrc) {
             const blob = dataURItoBlob(imgSrc);
@@ -63,7 +82,7 @@ const WebcamCapture = () => {
 
                 const responseData = await response.json();
                 if (response.status === 200) {
-                    console.log(responseData);
+                    setIsdata(responseData.category);
                 }
             } catch (error) {
                 console.error("There was a problem with the fetch operation:", error);
@@ -73,35 +92,70 @@ const WebcamCapture = () => {
         }
     };
 
+    const getRecycler = async () => {
+        getLocation();
+        try {
+            const response = await fetch(`http://localhost:3000/get-recyclers?category=${data}&latitude=${latitude}&longitude=${longitude}`, {
+                method: "GET",
+            });
+
+            const responseData = await response.json();
+            if (response.status === 200) {
+                setRecycler(responseData.recycler);
+            }
+        } catch (error) {
+            console.error("There was a problem with the fetch operation:", error);
+        }
+    };
+
+    const cleardata = () => {
+        setImgSrc(null);
+        setIsdata(null);
+        setRecycler(null);
+    };
+
     return (
         <div style={divstyle}>
-            {!imgSrc && (
-              <div>
+            {!data && !imgSrc && (
+                <div>
                     <Webcam
                         audio={false}
                         ref={webcamRef}
                         screenshotFormat="image/jpeg"
                     />
-                     <div style={{textAlign: "center"}}>
+                    <div style={{ textAlign: "center" }}>
                         <button style={Buttonstyle} variant="outlined" onClick={capture}>Capture photo</button>
                     </div>
-              </div>
+                </div>
 
 
             )}
-            <div style={{ textAlign: "center"}}>
-                {imgSrc && (
+            <div style={{ textAlign: "center" }}>
+                {!data && imgSrc && (
                     <div>
-                      <img
-                      src={imgSrc}
-                      alt="Captured"
-                    />
-                    <div>
-                        <button style={Buttonstyle} variant="outlined" onClick={sendFile}>Send Photo</button>
-                        <button style={Buttonstyle} variant="outlined" onClick={recapture}>Recapture Photo</button>
-                    </div>
+                        <img
+                            src={imgSrc}
+                            alt="Captured"
+                        />
+                        <div>
+                            <button style={Buttonstyle} variant="outlined" onClick={sendFile}>Send Photo</button>
+                            <button style={Buttonstyle} variant="outlined" onClick={recapture}>Recapture Photo</button>
+                        </div>
                     </div>
                 )}
+                {data && !recycler && (
+                    <div>
+                        <Typography variant="h6" noWrap>{data}</Typography>
+                        <button style={Buttonstyle} variant="outlined" onClick={getRecycler}>Get Recycler</button>
+                    </div>
+                )}
+                {recycler && (
+                    <div>
+                        <Typography variant="h6" noWrap>{recycler}</Typography>
+                        <button style={Buttonstyle} variant="outlined" onClick={cleardata}>Clear</button>
+                    </div>
+                )}
+                
             </div>
 
         </div>
