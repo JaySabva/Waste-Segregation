@@ -19,7 +19,8 @@ import Clear from '@mui/icons-material/Clear';
 import CloseIcon from '@mui/icons-material/Close';
 import './home.css';
 import { CameraAlt } from "@mui/icons-material";
-
+// import React from 'react';
+import Collapsible from 'react-collapsible';
 
 const mainContainerstyle = {
     backgroundImage: `url(${image})`,
@@ -305,14 +306,15 @@ const axios = require("axios").default;
 // }));
 export const ImageUpload = () => {
     // const classes = useStyles();
+    const [expandedIndex, setExpandedIndex] = useState(null);
     const [selectedFile, setSelectedFile] = useState();
     const [preview, setPreview] = useState();
     const [data, setData] = useState();
     const [image, setImage] = useState(false);
     const [isLoading, setIsloading] = useState(false);
     const [iswebcamera, setIswebcamera] = useState(false);
-    const [latitude, setLatitude] = useState(null);
-    const [longitude, setLongitude] = useState(null);
+    // const [latitude, setLatitude] = useState(null);
+    // const [longitude, setLongitude] = useState(null);
     const [recycler, setRecycler] = useState(null);
     let confidence = 0;
 
@@ -321,14 +323,20 @@ export const ImageUpload = () => {
         if (image) {
 
             let formData = new FormData();
-            formData.append("file", selectedFile);
-            let res = await axios({
-                method: "post",
-                url: process.env.REACT_APP_API_URL,
-                data: formData,
-            });
-            if (res.status === 200) {
-                setData(res.data);
+            formData.append("image", selectedFile);
+            try {
+                const response = await fetch("http://127.0.0.1:8000/predict/", {
+                    method: "POST",
+                    body: formData,
+                });
+
+                const responseData = await response.json();
+                console.log(responseData);
+                if (response.status === 200) {
+                    setData(responseData.Category);
+                }
+            } catch (error) {
+                console.error("There was a problem with the fetch operation:", error);
             }
             setIsloading(false);
         }
@@ -340,6 +348,7 @@ export const ImageUpload = () => {
         setSelectedFile(null);
         setIsloading(null);
         setPreview(null);
+        setRecycler(null);
     };
 
     useEffect(() => {
@@ -356,7 +365,7 @@ export const ImageUpload = () => {
             return;
         }
         setIsloading(true);
-        //sendFile();
+        sendFile();
     }, [preview]);
 
     const onSelectFile = (files) => {
@@ -372,32 +381,41 @@ export const ImageUpload = () => {
     };
 
     const getLocation = () => {
-        navigator.geolocation.getCurrentPosition(
-            (position) => {
-                setLatitude(position.coords.latitude);
-                setLongitude(position.coords.longitude);
-            },
-            (error) => {
-                console.error('Error getting location:', error);
-            }
-        );
+        return new Promise((resolve, reject) => {
+            navigator.geolocation.getCurrentPosition(
+                (position) => {
+                    resolve({
+                        latitude: position.coords.latitude,
+                        longitude: position.coords.longitude
+                    });
+                },
+                (error) => {
+                    reject(error);
+                }
+            );
+        });
     };
 
     const getRecycler = async () => {
-        getLocation();
         try {
-            const response = await fetch(`http://localhost:3000/get-recyclers?category=${data}&latitude=${latitude}&longitude=${longitude}`, {
+            console.log("I");
+            const { latitude, longitude } = await getLocation();
+            const response = await fetch(`http://localhost:5000/get-recyclers?category=${data}&latitude=${latitude}&longitude=${longitude}`, {
                 method: "GET",
             });
 
-            const responseData = await response.json();
-            if (response.status === 200) {
-                setRecycler(responseData.recycler);
+            if (!response.ok) {
+                throw new Error(`HTTP error! status: ${response.status}`);
             }
+
+            const responseData = await response.json();
+            console.log(responseData);
+            setRecycler(responseData.recyclers);
         } catch (error) {
-            console.error("There was a problem with the fetch operation:", error);
+            console.error("There was a problem:", error);
         }
     };
+
 
 
 
@@ -408,6 +426,37 @@ export const ImageUpload = () => {
     if (data) {
         confidence = (parseFloat(data.confidence) * 100).toFixed(2);
     }
+    const recyclerContainerStyle = {
+        maxHeight: "50vh", // Set the max height as per your requirement
+        overflow: "auto",
+    };
+    const handleCardClick = (index) => {
+        setExpandedIndex(index);
+    };
+    const renderRecyclerCards = () => {
+        if (!recycler) {
+            return null;
+        }
+
+        return (
+            <div style={{ overflowY: "auto", maxHeight: "50vh" }}>
+                {recycler.map((recyclerData, index) => (
+                    <div key={index}>
+                        <Collapsible trigger={`${recyclerData.name} - Distane: ${recyclerData.distance.toPrecision(3)} Km`}>
+                            <CardContent>
+                                {/*<Typography variant="body1" color="textSecondary">Distance: {recyclerData.distance}</Typography>*/}
+                                <Typography variant="body1" color="textSecondary">{recyclerData.address}</Typography>
+                                <Typography variant="body1" color="textSecondary">{recyclerData.phone}</Typography>
+                                <Typography variant="body1" color="textSecondary">{recyclerData.email}</Typography>
+                                <Typography variant="body1" color="textSecondary">Google Maps Link: {recyclerData.gmap}</Typography>
+                                {/* Add more details here */}
+                            </CardContent>
+                        </Collapsible>
+                    </div>
+                ))}
+            </div>
+        );
+    };
 
     return (
         <React.Fragment>
@@ -479,6 +528,7 @@ export const ImageUpload = () => {
                             </Button>
                         </Grid>}
                     {recycler && <Grid item style={buttonGridstyle} >
+                        {renderRecyclerCards()}
                         <Button style={clearButtonstyle} variant="outlined" startIcon={<CloseIcon />} onClick={clearData}>
                             Close
                         </Button>
