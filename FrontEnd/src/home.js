@@ -1,4 +1,4 @@
-import { useState, useEffect, useRef, useCallback } from "react";
+import {useState, useEffect, useRef, useCallback} from "react";
 // import { makeStyles, withStyles } from "@mui/styles";
 import AppBar from "@mui/material/AppBar";
 import Toolbar from "@mui/material/Toolbar";
@@ -8,17 +8,30 @@ import Container from "@mui/material/Container";
 import React from "react";
 import Card from "@mui/material/Card";
 import CardContent from "@mui/material/CardContent";
-import { Paper, CardActionArea, CardMedia, Grid, TableContainer, Table, TableBody, TableHead, TableRow, TableCell, Button, CircularProgress } from "@mui/material";
+import {
+    Paper,
+    CardActionArea,
+    CardMedia,
+    Grid,
+    TableContainer,
+    Table,
+    TableBody,
+    TableHead,
+    TableRow,
+    TableCell,
+    Button,
+    CircularProgress
+} from "@mui/material";
 import cblogo from "./cblogo.PNG";
 import image from "./bg1.jpg";
 import DragDropFile from "./drag_and_drop";
 import WebcamCapture from "./Webcapture";
 //import { DropzoneArea } from 'material-ui-dropzone';
-import { common } from '@mui/material/colors';
+import {common} from '@mui/material/colors';
 import Clear from '@mui/icons-material/Clear';
 import CloseIcon from '@mui/icons-material/Close';
 import './home.css';
-import { CameraAlt } from "@mui/icons-material";
+import {CameraAlt} from "@mui/icons-material";
 // import React from 'react';
 import Collapsible from 'react-collapsible';
 
@@ -195,12 +208,34 @@ export const ImageUpload = () => {
     const [recycler, setRecycler] = useState(null);
     let confidence = 0;
 
+    const dataURItoBlob = (dataURI) => {
+        const byteString = atob(dataURI.split(",")[1]);
+        const mimeString = dataURI.split(",")[0].split(":")[1].split(";")[0];
+        const ab = new ArrayBuffer(byteString.length);
+        const ia = new Uint8Array(ab);
+        for (let i = 0; i < byteString.length; i++) {
+            ia[i] = byteString.charCodeAt(i);
+        }
+        const blob = new Blob([ab], {type: mimeString});
+        return blob;
+    };
     const sendFile = async () => {
         // getLocation();
         if (image) {
-
+            let blob = image;
+            // if image is base64 then convert it to jpg else remain same
+            // if image is already not base64 then don't convert
+            if (typeof image == "string") {
+                if (image.includes("data:image/jpeg;base64,")) {
+                    const base64 = image.replace("data:image/jpeg;base64,", "");
+                    blob = dataURItoBlob(image);
+                }
+            }
             let formData = new FormData();
-            formData.append("image", selectedFile);
+            if (typeof image != "string")
+                formData.append("image", selectedFile);
+            else
+                formData.append("image", blob);
             try {
                 const response = await fetch("http://127.0.0.1:8000/predict/", {
                     method: "POST",
@@ -277,7 +312,7 @@ export const ImageUpload = () => {
     const getRecycler = async () => {
         try {
             console.log("I");
-            const { latitude, longitude } = await getLocation();
+            const {latitude, longitude} = await getLocation();
             const response = await fetch(`http://localhost:5000/get-recyclers?category=${data}&latitude=${latitude}&longitude=${longitude}`, {
                 method: "GET",
             });
@@ -295,10 +330,10 @@ export const ImageUpload = () => {
     };
 
 
-
-
     const uploadtocam = () => {
+        clearData();
         setIswebcamera(!iswebcamera);
+
     }
 
     const capture = useCallback(() => {
@@ -329,16 +364,18 @@ export const ImageUpload = () => {
         }
 
         return (
-            <div style={{ overflowY: "auto", maxHeight: "50vh", backgroundColor: "#b3c7bb" }}>
+            <div style={{overflowY: "auto", maxHeight: "50vh", backgroundColor: "#b3c7bb"}}>
                 {recycler.map((recyclerData, index) => (
                     <div key={index}>
-                        <Collapsible trigger={`${recyclerData.name} - Distane: ${recyclerData.distance.toPrecision(3)} Km`}>
+                        <Collapsible
+                            trigger={`${recyclerData.name} - Distane: ${recyclerData.distance.toPrecision(3)} Km`}>
                             <CardContent>
                                 {/*<Typography variant="body1" color="textSecondary">Distance: {recyclerData.distance}</Typography>*/}
                                 <Typography variant="body1" color="textSecondary">{recyclerData.address}</Typography>
                                 <Typography variant="body1" color="textSecondary">{recyclerData.phone}</Typography>
                                 <Typography variant="body1" color="textSecondary">{recyclerData.email}</Typography>
-                                <Typography variant="body1" color="textSecondary">Google Maps Link: {recyclerData.gmap}</Typography>
+                                <Typography variant="body1" color="textSecondary">Google Maps
+                                    Link: {recyclerData.gmap}</Typography>
                                 {/* Add more details here */}
                             </CardContent>
                         </Collapsible>
@@ -357,13 +394,17 @@ export const ImageUpload = () => {
                         Garbage Separator Tool
                     </Typography>
 
-                    {!image && !iswebcamera && (<Button style={clearButtonstyle} variant="outlined" startIcon={<CameraAlt />} onClick={uploadtocam}>
-                        Open Camera
-                    </Button>)}
+                    {!image && !iswebcamera && (
+                        <Button style={clearButtonstyle} variant="outlined" startIcon={<CameraAlt/>}
+                                onClick={uploadtocam}>
+                            Open Camera
+                        </Button>)}
 
-                    {!image && iswebcamera && (<Button style={clearButtonstyle} variant="outlined" startIcon={<CameraAlt />} onClick={uploadtocam}>
-                        Upload Image
-                    </Button>)}
+                    {!image && iswebcamera && (
+                        <Button style={clearButtonstyle} variant="outlined" startIcon={<CameraAlt/>}
+                                onClick={uploadtocam}>
+                            Upload Image
+                        </Button>)}
 
 
                     {iswebcamera && image && (
@@ -405,7 +446,7 @@ export const ImageUpload = () => {
                     spacing={2}
                 >
                     <Grid item xs={12}>
-                        { (image || !iswebcamera) && <Card style={imageCardstyle}>
+                        {(image || !iswebcamera) && <Card style={imageCardstyle}>
                             {image && <CardActionArea>
                                 <CardMedia
                                     style={mediastyle}
@@ -415,8 +456,8 @@ export const ImageUpload = () => {
                                 />
                             </CardActionArea>
                             }
-                            {!image && !iswebcamera && <CardContent >
-                                <DragDropFile filechange={onSelectFile} />
+                            {!image && !iswebcamera && <CardContent>
+                                <DragDropFile filechange={onSelectFile}/>
                             </CardContent>}
                             {data && !recycler && <CardContent style={detailstyle}>
                                 <Typography variant="h6" noWrap>{data}</Typography>
@@ -425,14 +466,14 @@ export const ImageUpload = () => {
                                 <Typography variant="h6" noWrap>{data}</Typography>
                             </CardContent>}
                             {isLoading && <CardContent style={detailstyle}>
-                                <CircularProgress color="secondary" style={loaderstyle} />
+                                <CircularProgress color="secondary" style={loaderstyle}/>
                                 <Typography variant="h6" noWrap>
                                     Processing
                                 </Typography>
                             </CardContent>}
                         </Card>}
 
-                        {!image && iswebcamera && <WebcamCapture webcamRef={webcamRef} />}
+                        {!image && iswebcamera && <WebcamCapture webcamRef={webcamRef}/>}
                         {/* {iswebcamera && (
                             <div style={{ textAlign: "center" }}>
                                 <Button style={clearButtonstyle} variant="outlined" startIcon={<CameraAlt />} onClick={uploadtocam}>
@@ -450,15 +491,15 @@ export const ImageUpload = () => {
                                 getRecycler
                             </Button>
                         </Grid>} */}
-                    {recycler && <Grid item style={buttonGridstyle} >
+                    {recycler && <Grid item style={buttonGridstyle}>
                         {renderRecyclerCards()}
                         {/* <Button style={clearButtonstyle} variant="outlined" startIcon={<CloseIcon />} onClick={clearData}>
                             Close
                         </Button> */}
                     </Grid>}
 
-                </Grid >
-            </Container >
-        </React.Fragment >
+                </Grid>
+            </Container>
+        </React.Fragment>
     );
 };
