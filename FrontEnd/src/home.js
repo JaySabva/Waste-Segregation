@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef, useCallback } from "react";
 // import { makeStyles, withStyles } from "@mui/styles";
 import AppBar from "@mui/material/AppBar";
 import Toolbar from "@mui/material/Toolbar";
@@ -42,15 +42,15 @@ const growstyle = {
 };
 
 const clearButtonstyle = {
-    width: "-webkit-fill-available",
     borderRadius: "15px",
-    padding: "15px 22px",
+    padding: "8px 16px",
     backgroundColor: "#b3c7bb",
     color: "#000000a6",
-    fontSize: "20px",
+    fontSize: "14px",
     fontWeight: 900,
+    marginLeft: "auto",
+    marginRight: "10px",
 };
-
 const rootstyle = {
     maxWidth: 345,
     flexGrow: 1,
@@ -177,133 +177,9 @@ const Buttonstyle = {
     fontWeight: 900,
 };
 
-
-
-// const ColorButton = withStyles((theme) => ({
-//     root: {
-//         color: theme.palette.getContrastText(common.white),
-//         backgroundColor: common.white,
-//         '&:hover': {
-//             backgroundColor: '#ffffff7a',
-//         },
-//     },
-// }))(Button);
 const axios = require("axios").default;
 
-// const useStyles = makeStyles((theme) => ({
-//     grow: {
-//         flexGrow: 1,
-//     },
-//     clearButton: {
-//         width: "-webkit-fill-available",
-//         borderRadius: "15px",
-//         padding: "15px 22px",
-//         color: "#000000a6",
-//         fontSize: "20px",
-//         fontWeight: 900,
-//     },
-//     root: {
-//         maxWidth: 345,
-//         flexGrow: 1,
-//     },
-//     media: {
-//         height: 400,
-//     },
-//     paper: {
-//         padding: theme.spacing(2),
-//         margin: 'auto',
-//         maxWidth: 500,
-//     },
-//     gridContainer: {
-//         justifyContent: "center",
-//         padding: "4em 1em 0 1em",
-//     },
-//     mainContainer: {
-//         backgroundImage: `url(${image})`,
-//         backgroundRepeat: 'no-repeat',
-//         backgroundPosition: 'center',
-//         backgroundSize: 'cover',
-//         height: "93vh",
-//         marginTop: "8px",
-//     },
-//     imageCard: {
-//         margin: "auto",
-//         maxWidth: 400,
-//         height: 500,
-//         backgroundColor: 'transparent',
-//         boxShadow: '0px 9px 70px 0px rgb(0 0 0 / 30%) !important',
-//         borderRadius: '15px',
-//     },
-//     imageCardEmpty: {
-//         height: 'auto',
-//     },
-//     noImage: {
-//         margin: "auto",
-//         width: 400,
-//         height: "400 !important",
-//     },
-//     input: {
-//         display: 'none',
-//     },
-//     uploadIcon: {
-//         background: 'white',
-//     },
-//     tableContainer: {
-//         backgroundColor: 'transparent !important',
-//         boxShadow: 'none !important',
-//     },
-//     table: {
-//         backgroundColor: 'transparent !important',
-//     },
-//     tableHead: {
-//         backgroundColor: 'transparent !important',
-//     },
-//     tableRow: {
-//         backgroundColor: 'transparent !important',
-//     },
-//     tableCell: {
-//         fontSize: '22px',
-//         backgroundColor: 'transparent !important',
-//         borderColor: 'transparent !important',
-//         color: '#000000a6 !important',
-//         fontWeight: 'bolder',
-//         padding: '1px 24px 1px 16px',
-//     },
-//     tableCell1: {
-//         fontSize: '14px',
-//         backgroundColor: 'transparent !important',
-//         borderColor: 'transparent !important',
-//         color: '#000000a6 !important',
-//         fontWeight: 'bolder',
-//         padding: '1px 24px 1px 16px',
-//     },
-//     tableBody: {
-//         backgroundColor: 'transparent !important',
-//     },
-//     text: {
-//         color: 'white !important',
-//         textAlign: 'center',
-//     },
-//     buttonGrid: {
-//         maxWidth: "416px",
-//         width: "100%",
-//     },
-//     detail: {
-//         backgroundColor: 'white',
-//         display: 'flex',
-//         justifyContent: 'center',
-//         flexDirection: 'column',
-//         alignItems: 'center',
-//     },
-//     appbar: {
-//         background: '#be6a77',
-//         boxShadow: 'none',
-//         color: 'white'
-//     },
-//     loader: {
-//         color: '#be6a77 !important',
-//     }
-// }));
+
 export const ImageUpload = () => {
     // const classes = useStyles();
     const [expandedIndex, setExpandedIndex] = useState(null);
@@ -313,6 +189,7 @@ export const ImageUpload = () => {
     const [image, setImage] = useState(false);
     const [isLoading, setIsloading] = useState(false);
     const [iswebcamera, setIswebcamera] = useState(false);
+    const webcamRef = useRef(null);
     // const [latitude, setLatitude] = useState(null);
     // const [longitude, setLongitude] = useState(null);
     const [recycler, setRecycler] = useState(null);
@@ -346,9 +223,10 @@ export const ImageUpload = () => {
         setData(null);
         setImage(false);
         setSelectedFile(null);
-        setIsloading(null);
+        setIsloading(false);
         setPreview(null);
         setRecycler(null);
+        setIswebcamera(false);
     };
 
     useEffect(() => {
@@ -423,6 +301,18 @@ export const ImageUpload = () => {
         setIswebcamera(!iswebcamera);
     }
 
+    const capture = useCallback(() => {
+        const imageSrc = webcamRef.current.getScreenshot();
+        setImage(imageSrc);
+        setPreview(imageSrc);
+    }, [webcamRef, setImage]);
+
+    const recapture = () => {
+        setImage(null);
+        setPreview(null);
+        setIswebcamera(true);
+    }
+
     if (data) {
         confidence = (parseFloat(data.confidence) * 100).toFixed(2);
     }
@@ -439,7 +329,7 @@ export const ImageUpload = () => {
         }
 
         return (
-            <div style={{ overflowY: "auto", maxHeight: "50vh" }}>
+            <div style={{ overflowY: "auto", maxHeight: "50vh", backgroundColor: "#b3c7bb" }}>
                 {recycler.map((recyclerData, index) => (
                     <div key={index}>
                         <Collapsible trigger={`${recyclerData.name} - Distane: ${recyclerData.distance.toPrecision(3)} Km`}>
@@ -462,11 +352,47 @@ export const ImageUpload = () => {
         <React.Fragment>
             <AppBar position="static" style={appbarstyle}>
                 <Toolbar>
-                    <Typography variant="h6" noWrap>
+
+                    <Typography variant="h6" noWrap style={growstyle}>
                         Garbage Separator Tool
                     </Typography>
-                    <div style={growstyle} />
-                    {/* <Avatar src={cblogo}></Avatar> */}
+
+                    {!image && !iswebcamera && (<Button style={clearButtonstyle} variant="outlined" startIcon={<CameraAlt />} onClick={uploadtocam}>
+                        Open Camera
+                    </Button>)}
+
+                    {!image && iswebcamera && (<Button style={clearButtonstyle} variant="outlined" startIcon={<CameraAlt />} onClick={uploadtocam}>
+                        Upload Image
+                    </Button>)}
+
+
+                    {iswebcamera && image && (
+                        <Button style={clearButtonstyle} variant="outlined" onClick={recapture}>
+                            Recapture image
+                        </Button>
+                    )}
+
+                    {iswebcamera && !image && (
+                        <Button style={clearButtonstyle} variant="outlined" onClick={capture}>
+                            capture image
+                        </Button>
+                    )}
+
+
+                    {/* Move Get Recycler button to the right */}
+                    {data && !recycler && (
+                        <Button style={clearButtonstyle} variant="outlined" onClick={getRecycler}>
+                            Get Recycler
+                        </Button>
+                    )}
+
+                    {/* Move Close button next to Get Recycler button */}
+                    {image && (
+                        <Button style={clearButtonstyle} variant="outlined" onClick={clearData}>
+                            upload new image
+                        </Button>
+                    )}
+
                 </Toolbar>
             </AppBar>
             <Container maxWidth={false} style={mainContainerstyle} disableGutters={true}>
@@ -479,7 +405,7 @@ export const ImageUpload = () => {
                     spacing={2}
                 >
                     <Grid item xs={12}>
-                        {!iswebcamera && <Card style={imageCardstyle}>
+                        { (image || !iswebcamera) && <Card style={imageCardstyle}>
                             {image && <CardActionArea>
                                 <CardMedia
                                     style={mediastyle}
@@ -492,9 +418,6 @@ export const ImageUpload = () => {
                             {!image && !iswebcamera && <CardContent >
                                 <DragDropFile filechange={onSelectFile} />
                             </CardContent>}
-                            {!iswebcamera && !image && <Button style={clearButtonstyle} variant="outlined" startIcon={<CameraAlt />} onClick={uploadtocam}>
-                                Open Camera
-                            </Button>}
                             {data && !recycler && <CardContent style={detailstyle}>
                                 <Typography variant="h6" noWrap>{data}</Typography>
                             </CardContent>}
@@ -509,16 +432,16 @@ export const ImageUpload = () => {
                             </CardContent>}
                         </Card>}
 
-                        {!image && iswebcamera && <WebcamCapture />}
-                        {iswebcamera && (
+                        {!image && iswebcamera && <WebcamCapture webcamRef={webcamRef} />}
+                        {/* {iswebcamera && (
                             <div style={{ textAlign: "center" }}>
                                 <Button style={clearButtonstyle} variant="outlined" startIcon={<CameraAlt />} onClick={uploadtocam}>
                                     Upload Image
                                 </Button>
                             </div>
-                        )}
+                        )} */}
                     </Grid>
-                    {data && !recycler &&
+                    {/* {data && !recycler &&
                         <Grid item style={buttonGridstyle} >
                             <Button style={clearButtonstyle} variant="outlined" startIcon={<CloseIcon />} onClick={clearData}>
                                 Close
@@ -526,12 +449,12 @@ export const ImageUpload = () => {
                             <Button style={clearButtonstyle} variant="outlined" onClick={getRecycler}>
                                 getRecycler
                             </Button>
-                        </Grid>}
+                        </Grid>} */}
                     {recycler && <Grid item style={buttonGridstyle} >
                         {renderRecyclerCards()}
-                        <Button style={clearButtonstyle} variant="outlined" startIcon={<CloseIcon />} onClick={clearData}>
+                        {/* <Button style={clearButtonstyle} variant="outlined" startIcon={<CloseIcon />} onClick={clearData}>
                             Close
-                        </Button>
+                        </Button> */}
                     </Grid>}
 
                 </Grid >
